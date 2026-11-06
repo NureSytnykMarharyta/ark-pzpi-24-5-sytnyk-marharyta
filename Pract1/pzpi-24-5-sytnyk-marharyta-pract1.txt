@@ -1,0 +1,395 @@
+Харківський національний університет радіоелектроніки
+Факультет комп’ютерних наук
+Катедра програмної інженерії
+
+ЗВІТ
+до практичного завдання № 1
+з дисципліни «Аналіз та рефакторинґ коду»
+на тему: «Правила оформлення програмного коду мовою F#»
+
+Виконала
+ст. гр. ПЗПІ-24-5
+Ситник Маргарита
+
+Перевірив
+ст. викладач катедри ПІ
+Сокорчук Ігор Петрович
+
+
+
+
+
+
+Харків 2026
+     1 ІСТОРІЯ ЗМІН
+     Зміни, внесені до звіту під час виконання практичного завдання, наведено в таблиці 1.1.
+     Таблиця 1.1 – Історія змін звіту
+№
+Дата
+Версія звіту
+Опис змін та виправлень
+1
+25.10.2026
+0.1
+Створено розділ «Завдання»
+2
+25.10.2026
+0.2
+Створено розділ «Опис виконаної роботи»
+3
+26.10.2026
+0.3
+Додано розділи «Висновки», «Використані джерела» та додатки А–В
+     2 ЗАВДАННЯ
+     Метою роботи є ознайомлення з рекомендаціями щодо написання чистого, зрозумілого та зручного для супроводу коду мовою F# і набуття навичок аналізу та рефакторингу коду. Для цього потрібно було дослідити правила організації проєкту, форматування, найменування, коментування та документування коду, обробки помилок і дотримання функціональної парадигми, проілюструвати їх прикладами з поясненнями, розглянути розробку через тестування та інструменти автоматичної перевірки коду, а також підготувати презентацію, відеодоповідь і звіт.
+     3 ОПИС ВИКОНАНОЇ РОБОТИ
+     3.1 Важливість правил оформлення коду
+     Для виконання роботи обрано мову F#, що поєднує функціональне програмування з платформою .NET. Основою рекомендацій є посібник зі стилю F# від Microsoft [1–4], вимоги якого автоматично застосовує форматер Fantomas [5], а загальні принципи чистого коду взято з книг Р. Мартіна [6] і С. Макконнелла [7]. Код читають значно частіше, ніж пишуть, тому єдиний для команди стиль заощаджує час: такий код легше читати й перевіряти, помилки в ньому помітніші, а нові учасники швидше розбираються в проєкті. Для F# правила оформлення мають і суто практичне значення, оскільки відступи є частиною синтаксису мови.
+     Рекомендації продемонстровано на навчальному прикладі розрахунку вартості замовлень інтернет-магазину; усі фрагменти коду зібрано в одному файлі code-examples-code-conventions.fs у репозиторії GitHub (додаток В). Презентація складається з 13 слайдів (рисунки Б.1–Б.13), значення правил оформлення показано на рисунку Б.2.
+     3.2 Структура коду
+     Код розподіляють між проєктами за призначенням: у прикладі логіку предметної області розміщено в просторі імен Shop.Domain, а тести – окремо, у Shop.Tests. Типи групують у простори імен (у прикладі це записи OrderLine і User, розділ В.4.1 додатка В), функції – у модулі, а класи застосовують для значень зі станом і для взаємодії з бібліотеками .NET [3]. Особливість F# полягає в тому, що файли компілюються в порядку, указаному у файлі проєкту .fsproj, і кожен файл бачить лише оголошення з файлів, розташованих вище. Якщо поміняти місцями Types.fs і Pricing.fs, компілятор видасть помилку FS0039. Тому залежності між файлами завжди спрямовані згори вниз, а циклічних залежностей не виникає. Порядок файлів у файлі проєкту наведено в розділі В.4.7 додатка В, слайд зображено на рисунку Б.3.
+     3.3 Форматування коду
+     Посібник Microsoft рекомендує відступ у чотири пробіли, а символи табуляції компілятор F# не приймає взагалі й видає помилку FS1161 [2]. Бінарні оператори відокремлюють пробілами, рядки не вирівнюють під довжину імен, а довгий конвеєр переносять так, щоб кожен оператор |> починав новий рядок. Fantomas за замовчуванням обмежує довжину рядка 120 символами [5]. Фігурні дужки у F# обмежують не блоки коду, а записи й списки, тому для них посібник описує три стилі: Cramped, Aligned (аналог Allman) і Stroustrup (аналог K&R) [2]. У роботі обрано стиль Aligned, який Fantomas застосовує за замовчуванням із восьмої версії. Налаштування форматування закріплено у файлі .editorconfig, наведеному в розділі В.4.8 додатка В, слайд зображено на рисунку Б.4.
+     3.4 Іменування змінних, функцій і типів
+     Значення, функції та параметри у F# називають у camelCase, а типи, модулі, простори імен і випадки розмічених об’єднань – у PascalCase; імена інтерфейсів починаються з літери I, а snake_case не використовують [4]. Ім’я має пояснювати призначення без незрозумілих скорочень: customerCount замість cc, isActive для булевої ознаки. У модулі Account число 3 замінено константою MaxLoginAttempts, тривалість сесії записано з одиницею виміру як 30.0<sec>, а числові коди стану – розміченим об’єднанням AccountStatus. Константу з атрибутом [<Literal>] слід називати з великої літери: ім’я з малої літери в шаблоні match компілятор сприйме як нову змінну, і така гілка спрацює для будь-якого значення. Код наведено в розділі В.4.2 додатка В, слайд зображено на рисунку Б.5.
+     3.5 Коментарі
+     Коментар має пояснювати, чому код написано саме так, а що він робить, повинно бути зрозуміло з імен і структури [6]. Посібник Microsoft радить використовувати однорядкові коментарі //, а блоковий коментар (* … *) залишати для тимчасового вимкнення коду; коментар пишуть повним реченням із великої літери [2]. Коментарі, що переказують код, і закоментовані фрагменти видаляють, бо попередні версії зберігає Git. У прикладі до рефакторингу коментар «рахуємо» нічого не пояснює (розділ В.2 додатка В), тоді як коментарі в модулі Pricing розкривають зміст констант і одиниці виміру (розділ В.1 додатка В). Слайд зображено на рисунку Б.6.
+     3.6 Документування коду
+     Документаційні коментарі у F# записують після трьох скісних рисок у форматі XML, як і в інших мовах .NET [8]. Тег <summary> описує призначення елемента, <param> – параметр, <returns> – результат, <exception> – можливий виняток, а <example> – приклад виклику. Документують насамперед публічні функції, типи й модулі. Властивість GenerateDocumentationFile у файлі проєкту створює XML-файл документації, тож опис функцій видно в підказках IntelliSense, а попередження 3390 повідомляє, якщо ім’я в тегу <param> не відповідає параметру функції. Документацію функції applyDiscount наведено в розділі В.1 додатка В, слайд зображено на рисунку Б.7.
+     3.7 Обробка помилок і функціональний стиль
+     Очікувані помилки у F# описують типами, а не винятками: функція parsePrice повертає Result, а можливі причини невдачі перелічено в розміченому об’єднанні PriceError. Винятки залишають для непередбачених ситуацій, а конструкцію with _ -> None, яка приховує причину збою, не використовують [3]. Компілятор попереджає про неповне зіставлення зі зразком, тому кожен вид помилки доводиться обробити явно; цей підхід детально описано в книзі С. Влашина [9].
+     Функціональний стиль передбачає незмінні дані й чисті функції: функція activeEmails обробляє список конвеєром із List.filter і List.map замість циклу зі змінним станом. Такий код коротший і легше тестується, а з погляду продуктивності варто уникати накопичення списку оператором @ у циклі, бо він щоразу копіює список. Код наведено в розділах В.4.3 і В.4.4 додатка В.
+     3.8 Конвенції стилю кодування для різних мов
+     Кожна мова має власний посібник зі стилю. Для Python це PEP 8: відступ у чотири пробіли, snake_case і рядок до 79 символів [10]. Для C++ і Java поширені посібники Google з відступом у два пробіли й довжиною рядка 80 і 100 символів відповідно [11, 12], для JavaScript – посібник Airbnb [13] разом із лінтером ESLint і форматером Prettier [14]. Для F# аналогічну роль відіграють посібник Microsoft, Fantomas і FSharpLint. Попри різницю в конкретних значеннях підхід однаковий: правила записують у конфігураційних файлах репозиторію, а їх дотримання перевіряють інструменти. Слайд зображено на рисунку Б.8.
+     3.9 Кодування на основі тестування (TDD)
+     Розробка через тестування, описана К. Беком [15], складається з циклу «червоний – зелений – рефакторинг»: спочатку пишуть тест, який не проходить, потім мінімальний код для його проходження, а далі покращують код, зберігаючи успішні тести. Тести розміщують в окремому проєкті, кожен тест перевіряє одну поведінку, а його назва описує очікуваний результат. Чисті функції F# легко тестувати без імітаційних об’єктів: досить викликати функцію з певними аргументами й порівняти результат з очікуваним. У прикладі тести бібліотеки Expecto [16] перевіряють, що знижка 10 % від 200 грн дає 180 грн, знижка понад 100 % спричиняє виняток, а сума замовлення правильно враховує знижку та ПДВ. Код наведено в розділі В.4.5 додатка В, слайд зображено на рисунку Б.9.
+     3.10 Інструменти та автоматизація якості коду
+     Дотримання правил перевіряють автоматично на трьох рівнях. У редакторі Fantomas форматує код, а аналізатор FSharpLint, що має понад 90 правил, позначає порушення [17]. Перед комітом Git hook запускає команду dotnet fantomas --check, яка завершується з кодом 99, якщо якийсь файл потрібно відформатувати [5]. На сервері GitHub Actions кожна зміна збирається в режимі «попередження як помилки» з увімкненими попередженнями 1182 (невикористані значення) і 3390, після чого запускаються FSharpLint і тести. Поширені платформи SonarQube і Codacy офіційно F# не підтримують: для SonarQube існує лише community-плагін [18], а в переліку мов Codacy F# немає [19]. Сценарій безперервної інтеграції наведено в розділі В.4.9 додатка В, слайд зображено на рисунку Б.10.
+     3.11 Приклад оформлення коду: до і після рефакторингу
+     Як приклад узято функцію, що обчислює суму замовлення з урахуванням знижки 10 % для замовлень понад 1000 грн і ПДВ 20 %. Початкова версія обчислює правильно, але порушує більшість описаних правил: імена calc, l, t, p, q нічого не пояснюють, числа 1000, 0.9 і 1.2 не мають назв, оператори не відокремлено пробілами, відступ становить два пробіли, а суму накопичено в циклі зі змінним станом.
+     Під час рефакторингу застосовано методи з каталогу М. Фаулера [20, 21]: Rename Variable, Replace Magic Literal, Introduce Parameter Object, Extract Function і Replace Loop with Pipeline. Кортеж замінено записом OrderLine, числа – іменованими значеннями discountThreshold, discountRate і vatRate, а обчислення розбито на функції lineTotal, discountFor і orderTotal. Перевірка в модулі Compare (розділ В.4.6 додатка В) підтвердила, що на 2003 замовленнях (2000 випадкових і 3 граничні) результати обох версій збігаються. Код до і після рефакторингу наведено в розділах В.2 і В.3 додатка В, слайд зображено на рисунку Б.11.
+     4 ВИСНОВКИ
+     У ході практичної роботи розглянуто основні рекомендації щодо написання чистого, зрозумілого та зручного для супроводу коду мовою F#: організацію проєкту, форматування, найменування, коментування й документування коду, обробку помилок і функціональний стиль. Кожну рекомендацію проілюстровано фрагментами коду та пояснено, як вона впливає на супровід програми.
+     З’ясовано, що у F# правила оформлення мають практичні наслідки: відступи визначають структуру програми, порядок файлів у проєкті – можливі залежності, а регістр імені літерала – поведінку зіставлення зі зразком. Отримано навички роботи з форматером Fantomas, аналізатором FSharpLint і бібліотекою тестування Expecto, а також рефакторингу коду без зміни його поведінки, що підтверджено автоматичним порівнянням результатів.
+     5 ВИКОРИСТАНІ ДЖЕРЕЛА
+     1. F# style guide. Microsoft Learn. URL: https://learn.microsoft.com/dotnet/fsharp/style-guide/ (дата звернення: 26.10.2026).
+     2. F# code formatting guidelines. Microsoft Learn. URL: https://learn.microsoft.com/dotnet/fsharp/style-guide/formatting (дата звернення: 26.10.2026).
+     3. F# coding conventions. Microsoft Learn. URL: https://learn.microsoft.com/dotnet/fsharp/style-guide/conventions (дата звернення: 26.10.2026).
+     4. F# component design guidelines. Microsoft Learn. URL: https://learn.microsoft.com/dotnet/fsharp/style-guide/component-design-guidelines (дата звернення: 26.10.2026).
+     5. Fantomas : F# source code formatter. URL: https://fsprojects.github.io/fantomas/ (дата звернення: 26.10.2026).
+     6. Мартін Р. Чистий код. Створення і рефакторинг за допомогою Agile / пер. з англ. І. Бондар-Терещенка. Харків : Фабула, 2019. 448 с.
+     7. McConnell S. Code Complete : A Practical Handbook of Software Construction. 2nd ed. Redmond : Microsoft Press, 2004. 914 p.
+     8. XML documentation comments (F#). Microsoft Learn. URL: https://learn.microsoft.com/dotnet/fsharp/language-reference/xml-documentation (дата звернення: 26.10.2026).
+     9. Wlaschin S. Domain Modeling Made Functional : Tackle Software Complexity with Domain-Driven Design and F#. Raleigh : The Pragmatic Bookshelf, 2018. 290 p.
+     10. PEP 8 – Style Guide for Python Code. URL: https://peps.python.org/pep-0008/ (дата звернення: 26.10.2026).
+     11. Google C++ Style Guide. URL: https://google.github.io/styleguide/cppguide.html (дата звернення: 26.10.2026).
+     12. Google Java Style Guide. URL: https://google.github.io/styleguide/javaguide.html (дата звернення: 26.10.2026).
+     13. Airbnb JavaScript Style Guide. URL: https://github.com/airbnb/javascript (дата звернення: 26.10.2026).
+     14. Prettier : Options. URL: https://prettier.io/docs/options (дата звернення: 26.10.2026).
+     15. Beck K. Test-Driven Development : By Example. Boston : Addison-Wesley, 2002. 240 p.
+     16. Expecto : a smooth testing lib for F#. URL: https://github.com/haf/expecto (дата звернення: 26.10.2026).
+     17. FSharpLint. URL: https://fsprojects.github.io/FSharpLint/ (дата звернення: 26.10.2026).
+     18. Add F# Support to SonarQube. Sonar Community. URL: https://community.sonarsource.com/t/add-f-support-to-sonarqube/25000 (дата звернення: 26.10.2026).
+     19. Supported languages and tools. Codacy docs. URL: https://docs.codacy.com/getting-started/supported-languages-and-tools/ (дата звернення: 26.10.2026).
+     20. Fowler M. Refactoring : Improving the Design of Existing Code. 2nd ed. Boston : Addison-Wesley, 2018. 448 p.
+     21. Fowler M. Changes for the 2nd Edition of Refactoring. URL: https://www.martinfowler.com/articles/refactoring-2nd-changes.html (дата звернення: 26.10.2026).
+ДОДАТОК А
+Відеозапис
+     Відеозапис доповіді на YouTube: https://youtu.be/sthjBalPzPc 
+     Хронологічний опис відеозапису:
+     00:00 – Представлення, тема й мета, навіщо потрібні правила оформлення коду
+     00:47 – Організація проєкту: порядок файлів, простори імен і модулі
+     01:50 – Відступи, табуляція, довжина рядка, стилі дужок
+     02:48 – Найменування, константи та параметри
+     03:55 – Правила коментування
+     04:36 – XML-документація
+     05:19 – Порівняння конвенцій Python, C++, Java, JavaScript і F#
+     06:04 – Розробка через тестування, тести Expecto
+     06:55 – Автоматизація перевірок: Fantomas, FSharpLint, Git hook, CI
+     07:53 – Рефакторинг прикладу: код до і після
+     08:57 – Висновки
+     09:21 – Джерела та завершення
+ДОДАТОК Б
+Слайди презентації
+
+Рисунок Б.1 – Титульний слайд
+
+Рисунок Б.2 – Значення правил оформлення коду
+
+Рисунок Б.3 – Організація коду в проєкті F#
+
+Рисунок Б.4 – Відступи, довжина рядка та стилі дужок у F#
+
+Рисунок Б.5 – Правила найменування, константи та параметри
+
+Рисунок Б.6 – Рекомендації щодо коментарів
+
+Рисунок Б.7 – XML-документація функцій
+
+Рисунок Б.8 – Конвенції стилю різних мов програмування
+
+Рисунок Б.9 – Розробка через тестування і тести Expecto
+
+Рисунок Б.10 – Засоби автоматизації перевірок якості коду
+
+Рисунок Б.11 – Код до і після рефакторингу
+
+Рисунок Б.12 – Підсумки доповіді
+
+Рисунок Б.13 – Перелік використаних джерел
+ДОДАТОК В
+Програмний код
+     В.1 Приклад оформлення програмного коду
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract1/pzpi-24-5-sytnyk-marharyta-pract1/code-examples-code-conventions.fs#L5-L39 
+ 5  module Pricing =
+ 6  
+ 7      /// Поріг суми замовлення (грн), після якого діє знижка.
+ 8      let discountThreshold = 1000m
+ 9  
+10      /// Знижка для великих замовлень (10 %).
+11      let discountRate = 0.10m
+12  
+13      /// Ставка ПДВ (20 %).
+14      let vatRate = 0.20m
+15  
+16      /// <summary>Повертає ціну зі знижкою.</summary>
+17      /// <param name="percent">Знижка, % (від 0 до 100).</param>
+18      /// <param name="price">Початкова ціна, грн.</param>
+19      /// <returns>Ціна після знижки.</returns>
+20      /// <exception cref="System.ArgumentOutOfRangeException">
+21      /// Якщо знижка поза межами 0–100.</exception>
+22      /// <example><c>applyDiscount 10m 200m</c> = 180m</example>
+23      let applyDiscount (percent: decimal) (price: decimal) : decimal =
+24          if percent < 0m || percent > 100m then
+25              raise (System.ArgumentOutOfRangeException(nameof percent))
+26  
+27          price * (1m - percent / 100m)
+28  
+29      /// Вартість одного рядка замовлення.
+30      let lineTotal (line: OrderLine) = line.Price * decimal line.Quantity
+31  
+32      /// Ставка знижки для заданої суми замовлення.
+33      let discountFor subtotal =
+34          if subtotal > discountThreshold then discountRate else 0m
+35  
+36      /// Сума замовлення зі знижкою та ПДВ.
+37      let orderTotal (lines: OrderLine list) =
+38          let subtotal = lines |> List.sumBy lineTotal
+39          subtotal * (1m - discountFor subtotal) * (1m + vatRate)
+     В.2 Приклад програмного коду до рефакторингу
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract1/pzpi-24-5-sytnyk-marharyta-pract1/code-examples-code-conventions.fs#L43-L49 
+43  module Before =
+44  
+45      // рахуємо
+46      let calc(l:list<decimal*int>)=
+47        let mutable t=0m
+48        for (p,q) in l do t<-t+p*decimal q
+49        if t>1000m then t*0.9m*1.2m else t*1.2m
+     В.3 Приклад програмного коду після рефакторингу
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract1/pzpi-24-5-sytnyk-marharyta-pract1/code-examples-code-conventions.fs#L53-L69 
+53  module After =
+54  
+55      type OrderLine = { Price: decimal; Quantity: int }
+56  
+57      let discountThreshold = 1000m // грн
+58      let discountRate = 0.10m
+59      let vatRate = 0.20m // ПДВ
+60  
+61      let lineTotal line = line.Price * decimal line.Quantity
+62  
+63      let discountFor subtotal =
+64          if subtotal > discountThreshold then discountRate else 0m
+65  
+66      /// Сума замовлення зі знижкою та ПДВ.
+67      let orderTotal (lines: OrderLine list) =
+68          let subtotal = lines |> List.sumBy lineTotal
+69          subtotal * (1m - discountFor subtotal) * (1m + vatRate)
+     В.4 Інші розглянуті фрагменти програмного коду
+     В.4.1 Типи даних предметної області
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract1/pzpi-24-5-sytnyk-marharyta-pract1/code-examples-code-conventions.fs#L73-L82 
+73  /// Рядок замовлення: ціна за одиницю та кількість.
+74  type OrderLine = { Price: decimal; Quantity: int }
+75  
+76  /// Користувач магазину.
+77  type User =
+78      {
+79          Name: string
+80          Email: string
+81          IsActive: bool
+82      }
+     В.4.2 Константи, одиниці виміру та розмічене об’єднання
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract1/pzpi-24-5-sytnyk-marharyta-pract1/code-examples-code-conventions.fs#L86-L109 
+ 86  module Account =
+ 87  
+ 88      /// Максимальна кількість невдалих спроб входу.
+ 89      [<Literal>]
+ 90      let MaxLoginAttempts = 3
+ 91  
+ 92      /// Секунди.
+ 93      [<Measure>]
+ 94      type sec
+ 95  
+ 96      /// Час неактивності, після якого сесія завершується.
+ 97      let sessionTimeout = 30.0<sec>
+ 98  
+ 99      /// Стан облікового запису.
+100      type AccountStatus =
+101          | Active
+102          | Blocked
+103  
+104      /// Чи може користувач увійти після заданої кількості невдалих спроб.
+105      let canLogin (failedAttempts: int) (status: AccountStatus) =
+106          match status, failedAttempts with
+107          | Blocked, _ -> false
+108          | Active, MaxLoginAttempts -> false
+109          | Active, _ -> true
+     В.4.3 Обробка помилок за допомогою типу Result
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract1/pzpi-24-5-sytnyk-marharyta-pract1/code-examples-code-conventions.fs#L113-L134 
+113  module Parsing =
+114  
+115      open System
+116      open System.Globalization
+117  
+118      /// Причини, з яких рядок не вдалося перетворити на ціну.
+119      type PriceError =
+120          | EmptyInput
+121          | NotANumber of string
+122          | Negative of decimal
+123  
+124      let private culture = CultureInfo.InvariantCulture
+125  
+126      /// Перетворює текст на ціну або повертає опис помилки.
+127      let parsePrice (text: string) : Result<decimal, PriceError> =
+128          if String.IsNullOrWhiteSpace text then
+129              Error EmptyInput
+130          else
+131              match Decimal.TryParse(text, NumberStyles.Number, culture) with
+132              | true, value when value < 0m -> Error(Negative value)
+133              | true, value -> Ok value
+134              | false, _ -> Error(NotANumber text)
+     В.4.4 Конвеєр обробки колекції
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract1/pzpi-24-5-sytnyk-marharyta-pract1/code-examples-code-conventions.fs#L138-L144 
+138  module Users =
+139  
+140      /// Адреси електронної пошти активних користувачів.
+141      let activeEmails (users: User list) =
+142          users
+143          |> List.filter (fun user -> user.IsActive)
+144          |> List.map (fun user -> user.Email.ToLowerInvariant())
+     В.4.5 Модульні тести Expecto
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract1/pzpi-24-5-sytnyk-marharyta-pract1/code-examples-code-conventions.fs#L150-L182 
+150  module PricingTests =
+151  
+152      open Expecto
+153      open Shop.Domain
+154      open Shop.Domain.Pricing
+155  
+156      [<Tests>]
+157      let discountTests =
+158          testList "applyDiscount" [
+159              test "10% від 200 грн = 180 грн" {
+160                  Expect.equal (applyDiscount 10m 200m) 180m "ціна"
+161              }
+162  
+163              test "знижка понад 100% — виняток" {
+164                  Expect.throwsT<System.ArgumentOutOfRangeException>
+165                      (fun () -> applyDiscount 150m 200m |> ignore)
+166                      "некоректна знижка"
+167              }
+168          ]
+169  
+170      [<Tests>]
+171      let orderTotalTests =
+172          testList "orderTotal" [
+173              test "без знижки: 2 × 250 грн + ПДВ = 600 грн" {
+174                  let order = [ { Price = 250m; Quantity = 2 } ]
+175                  Expect.equal (orderTotal order) 600m "сума"
+176              }
+177  
+178              test "зі знижкою: 3 × 400 грн − 10 % + ПДВ = 1296 грн" {
+179                  let order = [ { Price = 400m; Quantity = 3 } ]
+180                  Expect.equal (orderTotal order) 1296m "сума"
+181              }
+182          ]
+     В.4.6 Перевірка еквівалентності коду до і після рефакторингу
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract1/pzpi-24-5-sytnyk-marharyta-pract1/code-examples-code-conventions.fs#L188-L214 
+188  module Compare =
+189  
+190      // Перевіряє, що код до і після рефакторингу дає однаковий результат.
+191      open Shop.Domain.Before
+192      open Shop.Domain.After
+193  
+194      let random = System.Random(42)
+195  
+196      let randomLine () =
+197          let price = decimal (random.Next(1, 90000)) / 100m
+198          (price, random.Next(1, 8))
+199  
+200      let randomOrder () =
+201          [ for _ in 1 .. random.Next(0, 6) -> randomLine () ]
+202  
+203      let edgeCases = [ [ (1000m, 1) ]; [ (500m, 2) ]; [] ]
+204  
+205      let orders = [ for _ in 1..2000 -> randomOrder () ] @ edgeCases
+206  
+207      let toLine (price, quantity) = { Price = price; Quantity = quantity }
+208  
+209      let sameResult order = calc order = orderTotal (List.map toLine order)
+210  
+211      let mismatches = orders |> List.filter (not << sameResult)
+212  
+213      printfn "Перевірено замовлень: %d" orders.Length
+214      printfn "Розбіжностей: %d" mismatches.Length
+     В.4.7 Файл проєкту з налаштуваннями перевірок компілятора
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract1/pzpi-24-5-sytnyk-marharyta-pract1/code-examples-code-conventions.fs#L218-L235 
+218  // <Project Sdk="Microsoft.NET.Sdk">
+219  //
+220  //   <PropertyGroup>
+221  //     <TargetFramework>net8.0</TargetFramework>
+222  //     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+223  //     <WarnOn>1182;3390</WarnOn>
+224  //     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+225  //   </PropertyGroup>
+226  //
+227  //   <ItemGroup>
+228  //     <Compile Include="Types.fs" />
+229  //     <Compile Include="Pricing.fs" />
+230  //     <Compile Include="Account.fs" />
+231  //     <Compile Include="Parsing.fs" />
+232  //     <Compile Include="Users.fs" />
+233  //   </ItemGroup>
+234  //
+235  // </Project>
+     В.4.8 Налаштування форматування
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract1/pzpi-24-5-sytnyk-marharyta-pract1/code-examples-code-conventions.fs#L239-L249 
+239  // root = true
+240  //
+241  // [*]
+242  // charset = utf-8
+243  // end_of_line = lf
+244  // insert_final_newline = true
+245  //
+246  // [*.{fs,fsx,fsi}]
+247  // indent_size = 4
+248  // max_line_length = 120
+249  // fsharp_multiline_bracket_style = aligned
+     В.4.9 Конвеєр безперервної інтеграції
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract1/pzpi-24-5-sytnyk-marharyta-pract1/code-examples-code-conventions.fs#L253-L270 
+253  // name: CI
+254  //
+255  // on: [push, pull_request]
+256  //
+257  // jobs:
+258  //   build:
+259  //     runs-on: ubuntu-latest
+260  //     steps:
+261  //       - uses: actions/checkout@v4
+262  //       - uses: actions/setup-dotnet@v4
+263  //         with:
+264  //           dotnet-version: 8.0.x
+265  //       - run: dotnet tool restore
+266  //       - run: dotnet tool install --global dotnet-fsharplint
+267  //       - run: dotnet fantomas --check .
+268  //       - run: dotnet build -warnaserror
+269  //       - run: dotnet fsharplint lint Shop.sln
+270  //       - run: dotnet test
