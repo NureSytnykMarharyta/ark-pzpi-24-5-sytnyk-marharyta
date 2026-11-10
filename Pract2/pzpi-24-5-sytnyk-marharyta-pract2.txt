@@ -1,0 +1,208 @@
+Харківський національний університет радіоелектроніки
+Факультет комп’ютерних наук
+Катедра програмної інженерії
+
+ЗВІТ
+до практичного завдання № 2
+з дисципліни «Аналіз та рефакторинґ коду»
+на тему: «Методи рефакторингу коду: Substitute Algorithm, Remove Assignments to Parameters, Decompose Conditional»
+
+Виконала
+ст. гр. ПЗПІ-24-5
+Ситник Маргарита
+
+Перевірив
+ст. викладач катедри ПІ
+Сокорчук Ігор Петрович
+
+
+
+
+
+Харків 2026
+     1 ІСТОРІЯ ЗМІН
+     Зміни, внесені до звіту під час виконання практичного завдання, наведено в таблиці 1.1.
+     Таблиця 1.1 – Історія змін звіту
+№
+Дата
+Версія звіту
+Опис змін та виправлень
+1
+04.11.2026
+0.1
+Створено розділ «Завдання»
+2
+05.11.2026
+0.2
+Створено розділ «Опис виконаної роботи»
+3
+06.11.2026
+0.3
+Додано розділи «Висновки», «Використані джерела» та додатки А–В
+     2 ЗАВДАННЯ
+     Метою роботи є ознайомлення з методами рефакторингу коду та набуття навичок визначення проблемних ділянок у власному коді й усунення їх без зміни поведінки програми. Для цього потрібно було обрати три методи рефакторингу з каталогу М. Фаулера, описати проблему, яку розв’язує кожен із них, навести код до і після рефакторингу та пояснити переваги отриманого рішення, а також підготувати презентацію, відеодоповідь і звіт.
+     3 ОПИС ВИКОНАНОЇ РОБОТИ
+     3.1 Рефакторинг і вибір методів
+     Рефакторинг – це зміна внутрішньої структури програми, яка робить код зрозумілішим і дешевшим для подальших змін, не змінюючи його видимої поведінки [1]. Для роботи обрано три методи з каталогу М. Фаулера [1, 2]: Substitute Algorithm (заміна алгоритму), Remove Assignments to Parameters (видалення присвоювань параметрам) і Decompose Conditional (декомпозиція умовного оператора). Методи застосовано до коду навчального проєкту інтернет-магазину мовою F#, який продовжує практичне завдання № 1. Код усіх прикладів зібрано в одному файлі code-examples-refactoring-methods.fsx: для кожного методу в ньому є модуль із кодом до рефакторингу (суфікс Before) і модуль із кодом після рефакторингу (суфікс After). Презентація складається з 13 слайдів (рисунки Б.1–Б.13), обрані методи показано на рисунку Б.2.
+     3.2 Метод Substitute Algorithm
+     Метод Substitute Algorithm застосовують, коли той самий результат можна отримати простішим алгоритмом, зокрема засобами стандартної бібліотеки: тіло функції замінюють цілком, зберігаючи її сигнатуру [1, 3]. У прикладі функція topProducts повертає задану кількість найпопулярніших товарів. Початкова версія обчислює правильно, але сортує копію списку власною реалізацією сортування бульбашкою, а потім у циклі while переносить перші count елементів до ResizeArray. Функція займає 14 рядків, містить три цикли й три змінні стану, має складність O(n²), а щоб зрозуміти її мету, код доводиться подумки виконувати.
+     Після рефакторингу тіло функції замінено конвеєром із List.sortByDescending і List.truncate, а сигнатура залишилася тією самою, тому код, що викликає функцію, змінювати не потрібно. Функцію скорочено з 14 до 4 рядків, змінних стану не залишилося, складність зменшилася до O(n log n), а на 5 000 товарах нова версія працює приблизно в 20 разів швидше (27,5 мс проти 1,3 мс). Сортування List.sortByDescending стабільне, тому товари з однаковими продажами зберігають порядок, як і в сортуванні бульбашкою. Код до і після рефакторингу наведено в розділах В.1 і В.2 додатка В, слайди зображено на рисунках Б.3 і Б.4.
+     3.3 Метод Remove Assignments to Parameters
+     Метод Remove Assignments to Parameters застосовують, коли функція присвоює параметру нове значення: проміжні результати переносять в окремі змінні, а параметр залишають незмінним [1, 4]. У другому виданні книги М. Фаулера цей метод увійшов до ширшого методу Split Variable [2, 5]. Параметри функцій у F# незмінні, і присвоєння total <- … компілятор відхиляє з помилкою FS0027, проте в тексті помилки сам радить let mutable x = expression. Так у функції amountDue з’являється копія let mutable total = total, яка затуляє однойменний параметр, – за змістом це те саме присвоювання параметру. Далі функція тричі перезаписує total, тому одне ім’я за чотири рядки набуває чотирьох значень, а з коду не видно, від якої суми обчислюється ліміт оплати бонусами (30 %): від початкової чи вже зі знижкою.
+     Після рефакторингу параметр total не змінюється, а кожен проміжний результат має власне незмінне ім’я: discounted – сума зі знижкою, bonusLimit – найбільша можлива оплата бонусами, paidByBonuses – фактично оплачена сума. Тепер прямо видно, що ліміт обчислюється від суми зі знижкою, і ця різниця суттєва: за замовлення на 1000 грн, 500 бонусів і трьох років стажу до сплати буде 665 грн, а за ліміту від початкової суми вийшло б 650 грн. Без ключового слова mutable функцію простіше тестувати й розбивати на частини. Код до і після рефакторингу наведено в розділах В.3 і В.4 додатка В, слайди зображено на рисунках Б.5 і Б.6.
+     3.4 Метод Decompose Conditional
+     Метод Decompose Conditional застосовують до складних конструкцій if-then-else: умову й кожну гілку виносять в окремі функції, назви яких пояснюють їхнє призначення [1, 6]. Близьку пораду дає Р. Мартін – інкапсулювати умовні вирази у функції з промовистими назвами [7]. У прикладі функція deliveryCost обирає тариф доставки, а умова підвищеного тарифу складається з трьох частин: дві перевіряють святковий період з 20 грудня по 7 січня, третя – важке замовлення в інше місто. Щоб зрозуміти таку умову, доводиться розшифровувати числа в порівняннях, гілка elif неявно залежить від того, що вся попередня умова хибна, а формули тарифів змішано з правилами їх вибору.
+     Після рефакторингу частини умови винесено у функції isHolidaySeason та isHeavyIntercity, а гілки – у функції premiumCost і regularCost, до якої увійшло й правило безкоштовної доставки. Головна функція тепер читається як бізнес-правило: у святковий період або для важкого замовлення в інше місто діє підвищений тариф, інакше – звичайний. Кожну допоміжну функцію можна перевірити окремо, а межі святкового періоду змінюються в одному місці; платою за це є більша кількість функцій, проте кожна з них коротка. Код до і після рефакторингу наведено в розділах В.5 і В.6 додатка В, слайди зображено на рисунках Б.7 і Б.8.
+     3.5 Перевірка збереження поведінки
+     Оскільки рефакторинг не повинен змінювати поведінку програми, старі версії функцій збережено в модулях із суфіксом Before як еталон. Розділ перевірки в кінці файлу code-examples-refactoring-methods.fsx запускає обидві версії кожної функції на 10 000 випадкових наборах даних і на граничних випадках: порожньому списку, однакових продажах, від’ємних бонусах, межах святкового періоду, вазі рівно 30 кг. Усього виконано 30 021 перевірку без жодної розбіжності. Щоб переконатися, що сама перевірка працює, у нові версії функцій навмисно вносилися помилки, і перевірка їх виявляла. Результат запуску зображено на рисунку Б.9.
+     3.6 Інструменти рефакторингу
+     Для F# перейменування й пошук використань підтримують JetBrains Rider, Visual Studio та Visual Studio Code з розширенням Ionide. Після змін форматер Fantomas приводить код до єдиного стилю [8], а Git дає змогу виконувати рефакторинг невеликими кроками й порівнювати версії. Автоматичних рефакторингів для F# менше, ніж для C# чи Java, тому основною гарантією коректності залишаються тести. Слайд зображено на рисунку Б.10, а підсумок застосування методів – на рисунку Б.11.
+     4 ВИСНОВКИ
+     У ході практичної роботи розглянуто три методи рефакторингу з каталогу М. Фаулера: Substitute Algorithm, Remove Assignments to Parameters і Decompose Conditional. Кожен метод застосовано до коду навчального проєкту інтернет-магазину мовою F#, наведено код до і після рефакторингу та пояснено, як зміни впливають на читабельність і супровід програми.
+     З’ясовано, що заміна алгоритму стандартними функціями скорочує код і зменшує його складність, відмова від присвоювань параметрам усуває неоднозначність проміжних значень, а декомпозиція умовного оператора перетворює складну умову на зрозуміле бізнес-правило. Отримано навички вибору методу рефакторингу для конкретної проблеми коду та перевірки того, що зміни не порушили поведінку програми, що підтверджено 30 021 автоматичною перевіркою.
+     5 ВИКОРИСТАНІ ДЖЕРЕЛА
+     1. Fowler M. Refactoring : Improving the Design of Existing Code. Reading : Addison-Wesley, 1999. 431 p.
+     2. Fowler M. Refactoring : Improving the Design of Existing Code. 2nd ed. Boston : Addison-Wesley, 2018. 448 p.
+     3. Substitute Algorithm. Refactoring.Guru. URL: https://refactoring.guru/substitute-algorithm (дата звернення: 06.11.2026).
+     4. Remove Assignments to Parameters. Refactoring.Guru. URL: https://refactoring.guru/remove-assignments-to-parameters (дата звернення: 06.11.2026).
+     5. Fowler M. Changes for the 2nd Edition of Refactoring. URL: https://www.martinfowler.com/articles/refactoring-2nd-changes.html (дата звернення: 06.11.2026).
+     6. Decompose Conditional. Refactoring.Guru. URL: https://refactoring.guru/decompose-conditional (дата звернення: 06.11.2026).
+     7. Мартін Р. Чистий код. Створення і рефакторинг за допомогою Agile / пер. з англ. І. Бондар-Терещенка. Харків : Фабула, 2019. 448 с.
+     8. Fantomas : F# source code formatter. URL: https://fsprojects.github.io/fantomas/ (дата звернення: 06.11.2026).
+ДОДАТОК А
+Відеозапис
+     Відеозапис доповіді на YouTube: https://youtu.be/9dJdMg6W3wc
+     Хронологічний опис відеозапису:
+     00:00 – Представлення, тема й мета роботи
+     00:16 – Вступ: що таке рефакторинг, обрані методи
+     01:39 – Substitute Algorithm: власне сортування бульбашкою
+     02:22 – Substitute Algorithm: заміна функціями модуля List
+     03:26 – Remove Assignments to Parameters: перезапис параметра
+     04:09 – Remove Assignments to Parameters: окремі імена значень
+     04:49 – Decompose Conditional: складна умова тарифу доставки
+     05:33 – Decompose Conditional: винесення умови й гілок у функції
+     06:18 – Перевірка збереження поведінки
+     07:08 – Інструменти рефакторингу
+     07:46 – Підсумок застосування методів
+     08:27 – Висновки
+     08:54 – Джерела та завершення
+ДОДАТОК Б
+Слайди презентації
+
+Рисунок Б.1 – Титульний слайд
+
+Рисунок Б.2 – Вступ: рефакторинг і обрані методи
+
+Рисунок Б.3 – Substitute Algorithm: власний алгоритм сортування
+
+Рисунок Б.4 – Substitute Algorithm: заміна стандартними функціями
+
+Рисунок Б.5 – Remove Assignments to Parameters: перезапис параметра
+
+Рисунок Б.6 – Remove Assignments to Parameters: окремі імена значень
+
+Рисунок Б.7 – Decompose Conditional: складна умова тарифу
+
+Рисунок Б.8 – Decompose Conditional: винесення умови у функції
+
+Рисунок Б.9 – Перевірка збереження поведінки
+
+Рисунок Б.10 – Інструменти рефакторингу
+
+Рисунок Б.11 – Підсумок застосування методів
+
+Рисунок Б.12 – Підсумки доповіді
+
+Рисунок Б.13 – Перелік використаних джерел
+ДОДАТОК В
+Програмний код
+     В.1 Функція topProducts до заміни алгоритму
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract2/pzpi-24-5-sytnyk-marharyta-pract2/code-examples-refactoring-methods.fsx#L45-L60 
+45  module SubstituteAlgorithmBefore =
+46      /// Повертає count найпопулярніших товарів.
+47      let topProducts (count: int) (products: Product list) =
+48          let arr = List.toArray products
+49          for i in 0 .. arr.Length - 2 do
+50              for j in 0 .. arr.Length - 2 - i do
+51                  if arr[j].Sold < arr[j + 1].Sold then
+52                      let tmp = arr[j]
+53                      arr[j] <- arr[j + 1]
+54                      arr[j + 1] <- tmp
+55          let result = ResizeArray<Product>()
+56          let mutable i = 0
+57          while i < count && i < arr.Length do
+58              result.Add(arr[i])
+59              i <- i + 1
+60          List.ofSeq result
+     В.2 Функція topProducts після заміни алгоритму
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract2/pzpi-24-5-sytnyk-marharyta-pract2/code-examples-refactoring-methods.fsx#L64-L69 
+64  module SubstituteAlgorithmAfter =
+65      /// Повертає count найпопулярніших товарів.
+66      let topProducts (count: int) (products: Product list) =
+67          products
+68          |> List.sortByDescending (fun product -> product.Sold)
+69          |> List.truncate count
+     В.3 Функція amountDue до видалення присвоювань параметрам
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract2/pzpi-24-5-sytnyk-marharyta-pract2/code-examples-refactoring-methods.fsx#L73-L82 
+73  module RemoveAssignmentsToParametersBefore =
+74      /// Сума до сплати зі знижкою постійного клієнта й бонусами.
+75      let amountDue (total: decimal) (bonuses: decimal) (years: int) =
+76          let mutable total = total
+77          if years >= loyalYears then
+78              total <- total * (1m - loyaltyRate)
+79          if bonuses > 0m then
+80              total <- total - min bonuses (total * maxBonusShare)
+81          total <- Math.Round(total, 2)
+82          total
+     В.4 Функція amountDue після видалення присвоювань параметрам
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract2/pzpi-24-5-sytnyk-marharyta-pract2/code-examples-refactoring-methods.fsx#L86-L95 
+86  module RemoveAssignmentsToParametersAfter =
+87      /// Сума до сплати зі знижкою постійного клієнта й бонусами.
+88      let amountDue (total: decimal) (bonuses: decimal) (years: int) =
+89          let discounted =
+90              if years >= loyalYears then total * (1m - loyaltyRate)
+91              else total
+92          let bonusLimit = discounted * maxBonusShare
+93          let paidByBonuses =
+94              if bonuses > 0m then min bonuses bonusLimit else 0m
+95          Math.Round(discounted - paidByBonuses, 2)
+     В.5 Функція deliveryCost до декомпозиції умовного оператора
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract2/pzpi-24-5-sytnyk-marharyta-pract2/code-examples-refactoring-methods.fsx#L99-L111 
+99   module DecomposeConditionalBefore =
+100      /// Вартість доставки замовлення на задану дату.
+101      let deliveryCost (date: DateTime) (order: Order) =
+102          if
+103              (date.Month = 12 && date.Day >= 20)
+104              || (date.Month = 1 && date.Day <= 7)
+105              || (order.WeightKg > heavyOrderKg && order.City <> homeCity)
+106          then
+107              order.WeightKg * premiumRatePerKg + premiumSurcharge
+108          elif order.Total >= freeDeliveryFrom then
+109              0m
+110          else
+111              order.WeightKg * regularRatePerKg + regularFee
+     В.6 Функція deliveryCost після декомпозиції умовного оператора
+     GitHub репозиторій: https://github.com/NureSytnykMarharyta/ark-pzpi-24-5-sytnyk-marharyta/blob/main/Pract2/pzpi-24-5-sytnyk-marharyta-pract2/code-examples-refactoring-methods.fsx#L115-L137 
+115  module DecomposeConditionalAfter =
+116      /// Святковий період: з 20 грудня по 7 січня.
+117      let isHolidaySeason (date: DateTime) =
+118          (date.Month = 12 && date.Day >= 20)
+119          || (date.Month = 1 && date.Day <= 7)
+120
+121      /// Важке замовлення в інше місто.
+122      let isHeavyIntercity (order: Order) =
+123          order.WeightKg > heavyOrderKg && order.City <> homeCity
+124
+125      let premiumCost (order: Order) =
+126          order.WeightKg * premiumRatePerKg + premiumSurcharge
+127
+128      let regularCost (order: Order) =
+129          if order.Total >= freeDeliveryFrom then 0m
+130          else order.WeightKg * regularRatePerKg + regularFee
+131
+132      /// Вартість доставки замовлення на задану дату.
+133      let deliveryCost (date: DateTime) (order: Order) =
+134          if isHolidaySeason date || isHeavyIntercity order then
+135              premiumCost order
+136          else
+137              regularCost order
